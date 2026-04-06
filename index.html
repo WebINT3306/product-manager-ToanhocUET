@@ -4,8 +4,138 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quản lý Sản phẩm</title>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px;
+      text-align: left;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    tbody tr:hover {
+      background-color: #ddd;
+    }
+    input, button {
+      margin: 5px;
+      padding: 6px;
+    }
+    th {
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
+  <h2>Danh sách sản phẩm</h2>
 
+  <input id="input-name" type="text" placeholder="Tên sản phẩm">
+  <input id="input-category" type="text" placeholder="Danh mục">
+  <input id="input-price" type="number" placeholder="Đơn giá">
+  <input id="input-quantity" type="number" placeholder="Số lượng">
+  <button id="btn-add">Thêm</button>
+
+  <table id="product-table">
+    <thead>
+      <tr>
+        <th>STT</th>
+        <th id="sort-name">Tên sản phẩm</th>
+        <th>Danh mục</th>
+        <th>Đơn giá</th>
+        <th>Số lượng</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    let products = [];
+    let asc = true;
+
+    const tbody = document.querySelector("#product-table tbody");
+    const sortName = document.getElementById("sort-name");
+
+    function renderTable() {
+      tbody.innerHTML = "";
+      for (let i = 0; i < products.length; i++) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${products[i].name}</td>
+          <td>${products[i].category}</td>
+          <td>${products[i].price}</td>
+          <td>${products[i].quantity}</td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    const xhr = new XMLHttpRequest();
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        products = JSON.parse(xhr.responseText);
+        renderTable();
+        updateSortIcon();
+      }
+    };
+    xhr.open("GET", "products.json");
+    xhr.send();
+
+    function updateSortIcon() {
+      sortName.innerHTML = "Tên sản phẩm " + (asc ? "▲" : "▼");
+    }
+
+    sortName.addEventListener("click", function() {
+      products.sort(function(a, b) {
+        if (asc) {
+          return a.name.localeCompare(b.name);
+        } else {
+          return b.name.localeCompare(a.name);
+        }
+      });
+      renderTable();
+      asc = !asc;
+      updateSortIcon();
+    });
+
+    document.getElementById("btn-add").addEventListener("click", function() {
+      const name = document.getElementById("input-name").value.trim();
+      const category = document.getElementById("input-category").value.trim();
+      const price = document.getElementById("input-price").value;
+      const quantity = document.getElementById("input-quantity").value;
+
+      if (name.length < 3) {
+        alert("Tên sản phẩm phải ít nhất 3 ký tự");
+        return;
+      }
+      if (price <= 0) {
+        alert("Đơn giá phải là số dương");
+        return;
+      }
+      if (quantity < 1 || !Number.isInteger(Number(quantity))) {
+        alert("Số lượng phải >= 1");
+        return;
+      }
+
+      products.push({
+        id: products.length + 1,
+        name: name,
+        category: category,
+        price: Number(price),
+        quantity: Number(quantity)
+      });
+
+      renderTable();
+
+      document.getElementById("input-name").value = "";
+      document.getElementById("input-category").value = "";
+      document.getElementById("input-price").value = "";
+      document.getElementById("input-quantity").value = "";
+    });
+  </script>
 </body>
 </html>
